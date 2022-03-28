@@ -14,6 +14,11 @@ private:
     int PersonNumber;//Число, характеризующее абитуриента
 
 public:
+    int ball()
+    {
+        return priorities[currentprior].second[0];
+    }
+
     void initialization(const int& IdentNumOfPer, const vector<pair<string, vector<float>>>& PrioritiesAndScores)
     {
         currentprior = 0;
@@ -114,20 +119,8 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             --itr;
         }
     }
-
-    if (Entrants[EntrantId] >= Entrants[*itr])
-    {
-        if (direction[DirectionId].size() == direction[DirectionId].capacity())
-        {
-            NextEntrantId = *(--direction[DirectionId].end());
-            direction[DirectionId].pop_back();
-            direction[DirectionId].insert(itr, EntrantId);
-            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
-            return;
-        }
-        direction[DirectionId].insert(itr, EntrantId);
-    }
-    else
+     
+    if (Entrants[*itr] >= Entrants[EntrantId])
     {
         if (direction[DirectionId].size() == direction[DirectionId].capacity())
         {
@@ -138,6 +131,18 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             return;
         }
         direction[DirectionId].insert(++itr, EntrantId);
+    }
+    else
+    {
+        if (direction[DirectionId].size() == direction[DirectionId].capacity())
+        {
+            NextEntrantId = *(--direction[DirectionId].end());
+            direction[DirectionId].pop_back();
+            direction[DirectionId].insert(itr, EntrantId);
+            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
+            return;
+        }
+        direction[DirectionId].insert(itr, EntrantId);
     }
 
 }
@@ -169,7 +174,7 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
     std::ifstream cfgfile("inputfile.json");//Name of our file
     //ifstream - читать из файла
     cfgfile >> reader;
-    for (auto i = reader["competitions"].begin(); i != reader["competitions"].end(); i++)
+    for (auto i = reader["competitions"].begin(); i != reader["competitions"].end(); ++i)
     {
         vector<int> count;
         count.reserve((*i)["count"]);
@@ -177,7 +182,8 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
     }
 
     maxCountOfPriorityes = 0;
-    for (auto i = reader["entrants"].begin(); i != reader["entrants"].end(); i++)
+    entrants.reserve(reader["entrants"].size());
+    for (auto i = reader["entrants"].begin(); i != reader["entrants"].end(); ++i)
     {
         int PersonNum = (*i)["id"];
 
@@ -186,10 +192,22 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
         vector<pair<string, vector<float>>> Priorityes((*i)["competitions"].size(), std::make_pair(move(s), move(f)));
 
         if (maxCountOfPriorityes < (*i)["competitions"].size()) maxCountOfPriorityes = (*i)["competitions"].size();
-        
+        vector<int> arr;
+        arr.reserve((*i)["competitions"].size());
         for (auto j = (*i)["competitions"].begin(); j != (*i)["competitions"].end(); ++j)
         {
-            int num = (*j)["priority"] - 1;
+            arr.push_back((*j)["priority"]);
+        }
+        sort(arr.begin(), arr.end());
+
+        for (auto j = (*i)["competitions"].begin(); j != (*i)["competitions"].end(); ++j)
+        {
+            int num = 0;
+            for (int i = 0; i < arr.size(); ++i)
+            {
+                if (arr[i] == (*j)["priority"])
+                    num = i;
+            }
             string NumOfDirections = (*j)["competition_id"];
             Priorityes[num].first = NumOfDirections;
             Priorityes[num].second.reserve((*j)["balls"].size());
@@ -200,7 +218,9 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
         }
         Entrant e;
         e.initialization(PersonNum, Priorityes);
+        cout << PersonNum << " ";
         entrants.push_back(e);
+        //cout << PersonNum << " ";
     }
 }
 
@@ -211,7 +231,10 @@ void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>&
     {
         for (auto j = (*i).second.begin(); j != (*i).second.end(); ++j)
         {
-            *j = entrants[*j].getPersonNumber();
+            //Выводит номера абитуриентов
+            //*j = entrants[*j].getPersonNumber();
+            //Выводит баллы
+            *j = entrants[*j].ball();
         }
         writer.push_back(*i);
     }
