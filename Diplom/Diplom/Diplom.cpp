@@ -6,6 +6,7 @@
 #include <fstream>
 using namespace std;
 using json = nlohmann::json;
+
 class Entrant
 {
 private:
@@ -14,9 +15,9 @@ private:
     int PersonNumber;//Число, характеризующее абитуриента
 
 public:
-    int ball()
+    vector<float> balls()
     {
-        return priorities[currentprior].second[0];
+        return priorities[currentprior].second;
     }
 
     void initialization(const int& IdentNumOfPer, const vector<pair<string, vector<float>>>& PrioritiesAndScores)
@@ -69,6 +70,7 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
 
 void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior)
 {
+    //if (EntrantId == 0) cout << "Stakan " << EntrantId << endl;
     if (Entrants[EntrantId].getPrioritiesSize() - 1 == Entrants[EntrantId].getCurrPrior())
         return;
     if (Entrants[EntrantId].getCurrPrior() == NumOfCurrPrior)
@@ -218,7 +220,7 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
         }
         Entrant e;
         e.initialization(PersonNum, Priorityes);
-        cout << PersonNum << " ";
+        //cout << PersonNum << " ";
         entrants.push_back(e);
         //cout << PersonNum << " ";
     }
@@ -227,19 +229,42 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
 void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>& entrants)
 {
     json writer;
+    json miniwriter;
     for (auto i = direction.begin(); i != direction.end(); ++i)
     {
+        /*
+        "9": [
+        {
+            "id": 1,
+            "balls": [
+                300,
+                100,
+                100,
+                100,
+                0,
+                0,
+            ],
+            "priority": 3
+        },
+        ...
+        ],
+
+        */
         for (auto j = (*i).second.begin(); j != (*i).second.end(); ++j)
         {
-            //Выводит номера абитуриентов
-            //*j = entrants[*j].getPersonNumber();
-            //Выводит баллы
-            *j = entrants[*j].ball();
+            miniwriter["id"] = entrants[*j].getPersonNumber();
+
+            miniwriter["balls"] = entrants[*j].balls();
+
+            miniwriter["priority"] = entrants[*j].getCurrPrior() + 1;
+
+            writer[i->first].push_back(miniwriter);
+
         }
-        writer.push_back(*i);
+        //writer[i->first].push_back(miniwriter);
     }
     std::ofstream o("outputfile.json");
-    o << writer;
+    o << std::setw(4) << writer;
 }
 
 int main()// 
