@@ -264,6 +264,7 @@ void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>&
         //writer[i->first].push_back(miniwriter);
     }
     std::ofstream o("outputfile.json");
+    //std::setw(4) - выводит в красивом виде, как объекты
     o << std::setw(4) << writer;
 }
 
