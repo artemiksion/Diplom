@@ -64,15 +64,32 @@ public:
         }
         return true;
     }
+
+    json get_competitions_json()
+    {
+        json competitions;
+        for (int i = 0; i < this->priorities.size(); ++i)
+        {
+            json mini_comp;
+            mini_comp["balls"] = priorities[i].second;
+            mini_comp["priority"] = i + 1;
+            mini_comp["competition_id"] = priorities[i].first;
+            competitions.push_back(mini_comp);
+        }
+        return competitions;
+    }
 };
 
-void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior);
+void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders);
 
-void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior)
+void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
 {
     //if (EntrantId == 0) cout << "Stakan " << EntrantId << endl;
     if (Entrants[EntrantId].getPrioritiesSize() - 1 == Entrants[EntrantId].getCurrPrior())
+    {
+        full_outsiders.push_back(EntrantId);
         return;
+    }
     if (Entrants[EntrantId].getCurrPrior() == NumOfCurrPrior)
     {
         Outsiders.push_back(EntrantId);
@@ -80,14 +97,14 @@ void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unor
         return;
     }
     Entrants[EntrantId].increaseCurrentPrior();
-    InsertInDirection(Entrants, EntrantId, direction, Entrants[EntrantId].getCurrPriorNapravlenie(), Outsiders, NumOfCurrPrior);
+    InsertInDirection(Entrants, EntrantId, direction, Entrants[EntrantId].getCurrPriorNapravlenie(), Outsiders, NumOfCurrPrior, full_outsiders);
     return;
 }
 
 
 
 //Рекурсивная вставка абитуриентов по направлениям
-void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior)//Вставляет id в направление в порядке убывания
+void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)//Вставляет id в направление в порядке убывания
 {
     if (direction[DirectionId].size() == 0)
     {
@@ -104,13 +121,13 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             {
                 if (itr == --direction[DirectionId].end())
                 {
-                    ThrowEntrantIdFurther(Entrants, EntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
+                    ThrowEntrantIdFurther(Entrants, EntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior, full_outsiders);
                     return;
                 }
                 NextEntrantId = *(--direction[DirectionId].end());
                 direction[DirectionId].pop_back();
                 direction[DirectionId].insert(++itr, EntrantId);
-                ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
+                ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior, full_outsiders);
                 return;
             }
             direction[DirectionId].insert(++itr, EntrantId);
@@ -129,7 +146,7 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             NextEntrantId = *(--direction[DirectionId].end());
             direction[DirectionId].pop_back();
             direction[DirectionId].insert(++itr, EntrantId);
-            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
+            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
         }
         direction[DirectionId].insert(++itr, EntrantId);
@@ -141,7 +158,7 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             NextEntrantId = *(--direction[DirectionId].end());
             direction[DirectionId].pop_back();
             direction[DirectionId].insert(itr, EntrantId);
-            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior);
+            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, DirectionId, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
         }
         direction[DirectionId].insert(itr, EntrantId);
@@ -149,13 +166,13 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
 
 }
 
-void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map<string, vector<int>>& direction, const int& PriorityesMaxCount)// Засовываю абитуриентов в их стаканы
+void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map<string, vector<int>>& direction, const int& PriorityesMaxCount, vector<int>& full_outsiders)// Засовываю абитуриентов в их стаканы
 {// В этих цеклах я прохожу по приориетам абитуриентов, типа вначале смотрю первый приоритет всех абитуриентов, потом второй и так далее
     vector<int> Outsiders;
     vector<int> OutsidersInPrevCircle;
     for (int j = 0; j < entrants.size(); ++j)
     {
-        InsertInDirection(entrants, j, direction, entrants[j].getCurrPriorNapravlenie(), Outsiders, 0);
+        InsertInDirection(entrants, j, direction, entrants[j].getCurrPriorNapravlenie(), Outsiders, 0, full_outsiders);
     }
     for (int i = 1; i < PriorityesMaxCount; ++i)
     {
@@ -164,7 +181,7 @@ void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map
         if (OutsidersInPrevCircle.size() == 0)
             return;
         for (int j = 0; j < OutsidersInPrevCircle.size(); ++j)
-            InsertInDirection(entrants, OutsidersInPrevCircle[j], direction, entrants[OutsidersInPrevCircle[j]].getCurrPriorNapravlenie(), Outsiders, i);
+            InsertInDirection(entrants, OutsidersInPrevCircle[j], direction, entrants[OutsidersInPrevCircle[j]].getCurrPriorNapravlenie(), Outsiders, i, full_outsiders);
     }
     return;
 }
@@ -226,7 +243,7 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
     }
 }
 
-void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>& entrants)
+void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>& entrants, vector<int>& full_outsiders)
 {
     json writer;
     json miniwriter;
@@ -261,11 +278,27 @@ void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>&
             writer[i->first].push_back(miniwriter);
 
         }
-        //writer[i->first].push_back(miniwriter);
     }
     std::ofstream o("outputfile.json");
     //std::setw(4) - выводит в красивом виде, как объекты
     o << std::setw(4) << writer;
+    o.close();
+
+
+    //Я прохожу по каждому студенту, захожу в него, смотрю его напрвления и все выписываю
+    json loxi;
+    for (auto i = full_outsiders.begin(); i != full_outsiders.end(); ++i)
+    {
+        json mini_loxi;
+        mini_loxi["id"] = entrants[*i].getPersonNumber();
+        mini_loxi["competitions"] = entrants[*i].get_competitions_json();
+
+        loxi.push_back(mini_loxi);
+    }
+    std::ofstream f("outsiders_output_file.json");
+
+    f << std::setw(4) << loxi;
+    f.close();
 }
 
 int main()// 
@@ -273,6 +306,7 @@ int main()//
     unordered_map<string, vector<int>> direction;
     vector<Entrant> entrants;
     int maxCountOfPriorityes;
+    vector<int> full_outsiders;
     get_from_json(direction, entrants, maxCountOfPriorityes);
 
 
@@ -325,7 +359,7 @@ int main()//
 
 
 
-    DistributionOfEntrantsByDirections(entrants, direction, maxCountOfPriorityes);
+    DistributionOfEntrantsByDirections(entrants, direction, maxCountOfPriorityes, full_outsiders);
 
     /*for (auto i = direction["1"].begin(); i != direction["1"].end(); ++i)
     {
@@ -339,7 +373,7 @@ int main()//
     {
         cout << *i;
     }*/
-    set_to_json(direction, entrants);
+    set_to_json(direction, entrants, full_outsiders);
     
     return 0;
 }
