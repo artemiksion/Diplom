@@ -10,7 +10,7 @@ using json = nlohmann::json;
 class Entrant
 {
 private:
-    vector<pair<string, vector<float>>> priorities;//Первый элемент пары - цифра направления, Второй элемент пары - строка с баллами (Нулевое число - сумма баллов, первое, второе, третье и так далее - баллы по предметам, последнее - доп баллы)
+    vector<pair<int, vector<float>>> priorities;//Первый элемент пары - цифра направления, Второй элемент пары - строка с баллами (Нулевое число - сумма баллов, первое, второе, третье и так далее - баллы по предметам, последнее - доп баллы)
     int currentprior;//Текущий приоритет, типа сейчас мы смотрим 0 приоритет, значит текущий приоритет 0, если по нашему первому приоритету мы не прошли, тогда текущий приоритет будет 1 и так далее
     int PersonNumber;//Число, характеризующее абитуриента
 
@@ -20,7 +20,7 @@ public:
         return priorities[currentprior].second;
     }
 
-    void initialization(const int& IdentNumOfPer, const vector<pair<string, vector<float>>>& PrioritiesAndScores)
+    void initialization(const int& IdentNumOfPer, const vector<pair<int, vector<float>>>& PrioritiesAndScores)
     {
         currentprior = 0;
         PersonNumber = IdentNumOfPer;
@@ -43,7 +43,7 @@ public:
         return priorities.size();
     }
 
-    string getCurrPriorNapravlenie()
+    int getCurrPriorNapravlenie()
     {
         return priorities[currentprior].first;
     }
@@ -80,11 +80,10 @@ public:
     }
 };
 
-void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders);
+void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<int, vector<int>>& direction, const int& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders);
 
-void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
+void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<int, vector<int>>& direction, const int& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
 {
-    //if (EntrantId == 0) cout << "Stakan " << EntrantId << endl;
     if (Entrants[EntrantId].getPrioritiesSize() - 1 == Entrants[EntrantId].getCurrPrior())
     {
         full_outsiders.push_back(EntrantId);
@@ -103,8 +102,8 @@ void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unor
 
 
 
-//Рекурсивная вставка абитуриентов по направлениям
-void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<string, vector<int>>& direction, const string& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)//Вставляет id в направление в порядке убывания
+
+void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<int, vector<int>>& direction, const int& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
 {
     if (direction[DirectionId].size() == 0)
     {
@@ -134,9 +133,7 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             return;
         }
         else
-        {
             --itr;
-        }
     }
      
     if (Entrants[*itr] >= Entrants[EntrantId])
@@ -166,8 +163,8 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
 
 }
 
-void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map<string, vector<int>>& direction, const int& PriorityesMaxCount, vector<int>& full_outsiders)// Засовываю абитуриентов в их стаканы
-{// В этих цеклах я прохожу по приориетам абитуриентов, типа вначале смотрю первый приоритет всех абитуриентов, потом второй и так далее
+void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map<int, vector<int>>& direction, const int& PriorityesMaxCount, vector<int>& full_outsiders)
+{
     vector<int> Outsiders;
     vector<int> OutsidersInPrevCircle;
     for (int j = 0; j < entrants.size(); ++j)
@@ -187,7 +184,7 @@ void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map
 }
 
 //При вводе номера приоритета, я уменьшаю его на 1 для удобной записи в вектор
-void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant>& entrants, int& maxCountOfPriorityes)
+void get_from_json(unordered_map<int, vector<int>>& direction, vector<Entrant>& entrants, int& maxCountOfPriorityes)
 {
     json reader;
     std::ifstream cfgfile("inputfile.json");//Name of our file
@@ -197,7 +194,7 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
     {
         vector<int> count;
         count.reserve((*i)["count"]);
-        direction[(*i)["id"]] = move(count);
+        direction[(*i)["id"]] = move(count);//ERROR
     }
 
     maxCountOfPriorityes = 0;
@@ -206,9 +203,9 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
     {
         int PersonNum = (*i)["id"];
 
-        string s = "";
+        int s = 0;
         vector<float> f;
-        vector<pair<string, vector<float>>> Priorityes((*i)["competitions"].size(), std::make_pair(move(s), move(f)));
+        vector<pair<int, vector<float>>> Priorityes((*i)["competitions"].size(), std::make_pair(move(s), move(f)));
 
         if (maxCountOfPriorityes < (*i)["competitions"].size()) maxCountOfPriorityes = (*i)["competitions"].size();
         vector<int> arr;
@@ -227,7 +224,7 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
                 if (arr[i] == (*j)["priority"])
                     num = i;
             }
-            string NumOfDirections = (*j)["competition_id"];
+            int NumOfDirections = (*j)["competition_id"];
             Priorityes[num].first = NumOfDirections;
             Priorityes[num].second.reserve((*j)["balls"].size());
             for (auto k = (*j)["balls"].begin(); k != (*j)["balls"].end(); ++k)
@@ -237,36 +234,16 @@ void get_from_json(unordered_map<string, vector<int>>& direction, vector<Entrant
         }
         Entrant e;
         e.initialization(PersonNum, Priorityes);
-        //cout << PersonNum << " ";
         entrants.push_back(e);
-        //cout << PersonNum << " ";
     }
 }
 
-void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>& entrants, vector<int>& full_outsiders)
+void set_to_json(unordered_map<int, vector<int>>& direction, vector<Entrant>& entrants, vector<int>& full_outsiders)
 {
     json writer;
     json miniwriter;
     for (auto i = direction.begin(); i != direction.end(); ++i)
     {
-        /*
-        "9": [
-        {
-            "id": 1,
-            "balls": [
-                300,
-                100,
-                100,
-                100,
-                0,
-                0,
-            ],
-            "priority": 3
-        },
-        ...
-        ],
-
-        */
         for (auto j = (*i).second.begin(); j != (*i).second.end(); ++j)
         {
             miniwriter["id"] = entrants[*j].getPersonNumber();
@@ -280,99 +257,34 @@ void set_to_json(unordered_map<string, vector<int>>& direction, vector<Entrant>&
         }
     }
     std::ofstream o("outputfile.json");
-    //std::setw(4) - выводит в красивом виде, как объекты
     o << std::setw(4) << writer;
     o.close();
 
-
-    //Я прохожу по каждому студенту, захожу в него, смотрю его напрвления и все выписываю
-    json loxi;
+    json outsiders;
     for (auto i = full_outsiders.begin(); i != full_outsiders.end(); ++i)
     {
-        json mini_loxi;
-        mini_loxi["id"] = entrants[*i].getPersonNumber();
-        mini_loxi["competitions"] = entrants[*i].get_competitions_json();
+        json mini_outsiders;
+        mini_outsiders["id"] = entrants[*i].getPersonNumber();
+        mini_outsiders["competitions"] = entrants[*i].get_competitions_json();
 
-        loxi.push_back(mini_loxi);
+        outsiders.push_back(mini_outsiders);
     }
     std::ofstream f("outsiders_output_file.json");
 
-    f << std::setw(4) << loxi;
+    f << std::setw(4) << outsiders;
     f.close();
 }
 
-int main()// 
+int main()
 {
-    unordered_map<string, vector<int>> direction;
+    unordered_map<int, vector<int>> direction;
     vector<Entrant> entrants;
     int maxCountOfPriorityes;
     vector<int> full_outsiders;
     get_from_json(direction, entrants, maxCountOfPriorityes);
 
-
-    /*
-    int i, j;
-    int DirectionCount;
-    cin >> DirectionCount;//Количество направлений
-    vector<vector<int>> Direction;//Массив направлений(стаканов), в которых будут храниться внутренний id абитуриентов
-    Direction.reserve(DirectionCount);
-    for (i = 0; i < DirectionCount; ++i)
-    {
-        int size;
-        cin >> size;//Вводится количество мест на каждом направлении
-        Direction[i].reserve(size);
-    }
-    int CountOfEntrants;//Количество передаваемых абитуриентов
-    cin >> CountOfEntrants;
-    vector<Entrant> Entrants;//Массив абитуриентов
-    Entrants.reserve(CountOfEntrants);
-    int maxCountOfPriorityes = 0;//Счётчик максимального количества направлений у одного абитуриента
-    for (i = 0; i < CountOfEntrants; ++i)// Здесь происходит ввод внешнего персонального номера человека, количества его приоритетов, самих этих приоритетов, количество баллов для этих приоритетов(Для бакалавриата и специалитета будет вводиться 5 или 6, сумма предметов, сами эти предметы в приоритетном порядке, доп баллы и ещё можно в самый конец приоритетное право) и самих этих баллов
-    {
-        int PersonNum;
-        cin >> PersonNum;
-        vector<pair<int, vector<float>>> Priorityes;
-        int PriorityesNum;
-        cin >> PriorityesNum;// Сюда вводится количество приориететов
-        if (PriorityesNum > maxCountOfPriorityes)
-            maxCountOfPriorityes = PriorityesNum;
-        Priorityes.reserve(PriorityesNum);
-        for (j = 0; j < PriorityesNum; ++j)
-        {
-            int NumOfDirections;
-            cin >> NumOfDirections;
-            Priorityes[j].first = NumOfDirections;
-            int NumOfScores;
-            cin >> NumOfScores;
-            Priorityes[j].second.reserve(NumOfScores);
-            for (int k = 0; k < NumOfScores; ++k)
-            {
-                int Score;
-                cin >> Score;
-                Priorityes[j].second.push_back(Score);
-            }
-        }
-        Entrants[i].initialization(PersonNum, Priorityes);
-    }*/
-
-
-
-
-
     DistributionOfEntrantsByDirections(entrants, direction, maxCountOfPriorityes, full_outsiders);
 
-    /*for (auto i = direction["1"].begin(); i != direction["1"].end(); ++i)
-    {
-        cout << *i;
-    }
-    for (auto i = direction["2"].begin(); i != direction["2"].end(); ++i)
-    {
-        cout << *i;
-    }
-    for (auto i = direction["3"].begin(); i != direction["3"].end(); ++i)
-    {
-        cout << *i;
-    }*/
     set_to_json(direction, entrants, full_outsiders);
     
     return 0;
