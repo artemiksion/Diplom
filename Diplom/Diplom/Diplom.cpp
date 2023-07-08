@@ -10,17 +10,17 @@ using json = nlohmann::json;
 class Entrant
 {
 private:
-    vector<pair<int, vector<float>>> priorities;//Первый элемент пары - цифра направления, Второй элемент пары - строка с баллами (Нулевое число - сумма баллов, первое, второе, третье и так далее - баллы по предметам, последнее - доп баллы)
+    vector<pair<int, unordered_map<string, int>>> priorities;//Первый элемент пары - цифра направления, Второй элемент пары - строка с баллами (Нулевое число - сумма баллов, первое, второе, третье и так далее - баллы по предметам, последнее - доп баллы)
     int currentprior;//Текущий приоритет, типа сейчас мы смотрим 0 приоритет, значит текущий приоритет 0, если по нашему первому приоритету мы не прошли, тогда текущий приоритет будет 1 и так далее
     int PersonNumber;//Число, характеризующее абитуриента
 
 public:
-    vector<float> balls()
+    unordered_map<string, int> balls()
     {
         return priorities[currentprior].second;
     }
 
-    void initialization(const int& IdentNumOfPer, const vector<pair<int, vector<float>>>& PrioritiesAndScores)
+    void initialization(const int& IdentNumOfPer, const vector<pair<int, unordered_map<string, int>>>& PrioritiesAndScores)
     {
         currentprior = 0;
         PersonNumber = IdentNumOfPer;
@@ -53,15 +53,54 @@ public:
         return PersonNumber;
     }
 
-    bool operator >=(const Entrant& A)
+    bool operator >=(Entrant& A)//Error here
     {
-        for (size_t i = 0; i < this->priorities[currentprior].second.size(); ++i)
-        {
-            if (this->priorities[currentprior].second[i] > A.priorities[A.currentprior].second[i])
-                return true;
-            if (this->priorities[currentprior].second[i] < A.priorities[A.currentprior].second[i])
-                return false;
+        if (this->priorities[currentprior].second["total_points"] > A.priorities[A.currentprior].second["total_points"]) {
+            return true;
         }
+        if (this->priorities[currentprior].second["total_points"] < A.priorities[A.currentprior].second["total_points"]) {
+            return false;
+        }
+
+
+        if (this->priorities[currentprior].second["subject_total_points"] > A.priorities[A.currentprior].second["subject_total_points"]) {
+            return true;
+        }
+        if (this->priorities[currentprior].second["subject_total_points"] < A.priorities[A.currentprior].second["subject_total_points"]) {
+            return false;
+        }
+
+
+        if (this->priorities[currentprior].second["subject_1_points"] > A.priorities[A.currentprior].second["subject_1_points"]) {
+            return true;
+        }
+        if (this->priorities[currentprior].second["subject_1_points"] < A.priorities[A.currentprior].second["subject_1_points"]) {
+            return false;
+        }
+
+
+        if (this->priorities[currentprior].second["subject_2_points"] > A.priorities[A.currentprior].second["subject_2_points"]) {
+            return true;
+        }
+        if (this->priorities[currentprior].second["subject_2_points"] < A.priorities[A.currentprior].second["subject_2_points"]) {
+            return false;
+        }
+
+
+        if (this->priorities[currentprior].second["subject_3_points"] > A.priorities[A.currentprior].second["subject_3_points"]) {
+            return true;
+        }
+        if (this->priorities[currentprior].second["subject_3_points"] < A.priorities[A.currentprior].second["subject_3_points"]) {
+            return false;
+        }
+
+        if (this->priorities[currentprior].second["achievement_points"] > A.priorities[A.currentprior].second["achievement_points"]) {
+            return true;
+        }
+        if (this->priorities[currentprior].second["achievement_points"] < A.priorities[A.currentprior].second["achievement_points"]) {
+            return false;
+        }
+
         return true;
     }
 
@@ -96,28 +135,31 @@ void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unor
         return;
     }
     Entrants[EntrantId].increaseCurrentPrior();
-    if (Entrants[EntrantId].getCurrPriorNapravlenie() == 0) {
-        cout << "We find person with 0 DirectionID: " << Entrants[EntrantId].getPersonNumber() << endl;
-    }
     InsertInDirection(Entrants, EntrantId, direction, Entrants[EntrantId].getCurrPriorNapravlenie(), Outsiders, NumOfCurrPrior, full_outsiders);
     return;
 }
 
-
-
-
 void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<int, vector<int>>& direction, const int& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
 {
-    if (direction.count(DirectionId) == 0) {
-        cout << "Function start with DirectionId == 0" << endl;
+    if (Entrants[EntrantId].getPersonNumber() == 4529) {
+        cout << "Entrant with id 4529 enter in function InsertInDirection with NumofCurrentPrior - " << NumOfCurrPrior << endl;
     }
-
+    if (direction[DirectionId].size() == 0 && direction[DirectionId].capacity() == 0)
+    {
+        ThrowEntrantIdFurther(Entrants, EntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
+        return;
+    }
     if (direction[DirectionId].size() == 0)
     {
         direction[DirectionId].push_back(EntrantId);
         return;
     }
+    //cout << "Trying get iterator. line 153" << endl;
     vector<int>::iterator itr = --direction[DirectionId].end();
+    //cout << "Have got iterator - " << *itr << "  line 153" << endl;
+    //cout << "Direction id: " << DirectionId << endl;
+    //cout << "DirectionId size " << direction[DirectionId].size() << endl;
+    //cout << "Direction --itr eq direction.begin " << (itr == direction[DirectionId].begin()) << endl;
     int NextEntrantId;
     while (itr != direction[DirectionId].begin())
     {
@@ -127,33 +169,65 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             {
                 if (itr == --direction[DirectionId].end())
                 {
+                    if (Entrants[EntrantId].getPersonNumber() == 4529) {
+                        cout << "Trying to throw further 4529 at line 179" << endl;
+                    }
                     ThrowEntrantIdFurther(Entrants, EntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
                     return;
                 }
                 NextEntrantId = *(--direction[DirectionId].end());
                 direction[DirectionId].pop_back();
+                //cout << "Trying to insert iterator. line 170" << endl;
+                if (Entrants[EntrantId].getPersonNumber() == 4529) {
+                    cout << "Inserting Entrant 4529 at line 184" << endl;
+                }
                 direction[DirectionId].insert(++itr, EntrantId);
+                //cout << "Has insert iterator. line 170" << endl;
+                if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
+                    cout << "Trying to throw further 4529 at line 190" << endl;
+                }
                 ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
                 return;
             }
+            //cout << "Trying to insert iterator. line 176" << endl;
+            if (Entrants[EntrantId].getPersonNumber() == 4529) {
+                cout << "Inserting Entrant 4529 at line 196" << endl;
+            }
             direction[DirectionId].insert(++itr, EntrantId);
+            //cout << "Trying to insert iterator. line 176" << endl;
             return;
         }
         else
+        {
             --itr;
+        }
     }
-     
+    //cout << "Comparing Entrants " << (Entrants[*itr] >= Entrants[EntrantId]) << endl;
+    //Try to check here, why itr not valid
     if (Entrants[*itr] >= Entrants[EntrantId])
     {
         if (direction[DirectionId].size() == direction[DirectionId].capacity())
         {
             NextEntrantId = *(--direction[DirectionId].end());
             direction[DirectionId].pop_back();
-            direction[DirectionId].insert(++itr, EntrantId);//ERROR Вернуть ++, когда уберу cout
+            //cout << "Trying to insert iterator. line 193" << endl;
+            if (Entrants[EntrantId].getPersonNumber() == 4529) {
+                cout << "Inserting Entrant 4529 at line 217" << endl;
+            }
+            direction[DirectionId].insert(++itr, EntrantId);
+            //cout << "Has insert iterator. line 193" << endl;
+            if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
+                cout << "Trying to throw further 4529 at line 217" << endl;
+            }
             ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
         }
+        //cout << "Trying to insert iterator. line 199" << endl;
+        if (Entrants[EntrantId].getPersonNumber() == 4529) {
+            cout << "Inserting Entrant 4529 at line 229" << endl;
+        }
         direction[DirectionId].insert(++itr, EntrantId);
+        //cout << "Trying to insert iterator. line 199" << endl;
     }
     else
     {
@@ -161,11 +235,34 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
         {
             NextEntrantId = *(--direction[DirectionId].end());
             direction[DirectionId].pop_back();
+            //Error HERE
+            //cout << "Trying to insert iterator. line 208" << endl;
+            //Here we find not valid iterator
+            //cout << *itr << "Number in Iterator" << endl;
+            if (Entrants[EntrantId].getPersonNumber() == 4529) {
+                cout << "Inserting Entrant 4529 at line 247" << endl;
+            }
             direction[DirectionId].insert(itr, EntrantId);
+            //cout << "Iterator has inserted. line 208" << endl;
+            if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
+                cout << "Trying to throw further 4529 at line 239" << endl;
+            }
             ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
         }
+        //cout << "Trying to insert iterator. line 215" << endl;
+        if (Entrants[EntrantId].getPersonNumber() == 4529) {
+            cout << "Inserting Entrant 4529 at line 257" << endl;
+            cout << "His current prior - " << Entrants[EntrantId].getCurrPrior() << endl;
+            cout << "His current napravlenie - " << Entrants[EntrantId].getCurrPriorNapravlenie() << endl;
+        }
         direction[DirectionId].insert(itr, EntrantId);
+        if (Entrants[EntrantId].getPersonNumber() == 4529) {//I need to output persons in that direction
+            cout << "Inserting Entrant 4529 at line 257" << endl;
+            cout << "His current prior - " << Entrants[EntrantId].getCurrPrior() << endl;
+            cout << "His current napravlenie - " << Entrants[EntrantId].getCurrPriorNapravlenie() << endl;
+        }
+        //cout << "Trying to insert iterator. line 215" << endl;
     }
 
 }
@@ -185,6 +282,7 @@ void DistributionOfEntrantsByDirections(vector<Entrant>& entrants, unordered_map
             entrants[j].increaseCurrentPrior();
         }
     }
+
     for (int i = 1; i < PriorityesMaxCount; ++i)
     {
         OutsidersInPrevCircle = Outsiders;
@@ -215,7 +313,17 @@ void get_from_json(unordered_map<int, vector<int>>& direction, vector<Entrant>& 
     for (auto i = reader["competitions"].begin(); i != reader["competitions"].end(); ++i)
     {
         vector<int> count;
+        /*if ((*i)["count"] == 0)
+        {
+            cout << (*i)["id"] << "Has 0 places for students";
+            exit(1);
+        }*/
         count.reserve((*i)["count"]);
+        if (direction.count((*i)["id"]) != 0)
+        {
+            cout << "2 same directions with same id - " << (*i)["id"] << ", must be one" << endl;
+            exit(2);
+        }
         direction[(*i)["id"]] = move(count);
     }
     maxCountOfPriorityes = 0;
@@ -225,18 +333,23 @@ void get_from_json(unordered_map<int, vector<int>>& direction, vector<Entrant>& 
         int PersonNum = (*i)["id"];
 
         int s = 0;
-        vector<float> f;
-        vector<pair<int, vector<float>>> Priorityes((*i)["competitions"].size(), std::make_pair(move(s), move(f)));
+        unordered_map<string, int> f;
+        vector<pair<int, unordered_map<string, int>>> Priorityes((*i)["competitions"].size(), std::make_pair(move(s), move(f)));
 
         if (maxCountOfPriorityes < (*i)["competitions"].size()) maxCountOfPriorityes = (*i)["competitions"].size();
         vector<int> arr;
         arr.reserve((*i)["competitions"].size());
         for (auto j = (*i)["competitions"].begin(); j != (*i)["competitions"].end(); ++j)
         {
+            if (std::find(arr.begin(), arr.end(), (*j)["priority"]) != arr.end())
+            {
+                cout << "2 same priorities " << (*j)["priority"] << endl;
+                exit(3);
+            }
             arr.push_back((*j)["priority"]);
         }
         sort(arr.begin(), arr.end());
-
+        //TODO Here i must change main logic
         for (auto j = (*i)["competitions"].begin(); j != (*i)["competitions"].end(); ++j)
         {
             int num = 0;
@@ -245,12 +358,21 @@ void get_from_json(unordered_map<int, vector<int>>& direction, vector<Entrant>& 
                 if (arr[i] == (*j)["priority"])
                     num = i;
             }
-            int NumOfDirections = (*j)["competition_id"];
-            Priorityes[num].first = NumOfDirections;
-            Priorityes[num].second.reserve((*j)["balls"].size());
-            for (auto k = (*j)["balls"].begin(); k != (*j)["balls"].end(); ++k)
+            Priorityes[num].first = (*j)["competition_id"];
+            Priorityes[num].second["total_points"] = (*j)["total_points"];
+            Priorityes[num].second["subject_total_points"] = (*j)["subject_total_points"];
+            Priorityes[num].second["subject_1_points"] = (*j)["subject_1_points"];
+            Priorityes[num].second["subject_2_points"] = (*j)["subject_2_points"];
+            Priorityes[num].second["subject_3_points"] = (*j)["subject_3_points"];
+            Priorityes[num].second["achievement_points"] = (*j)["achievement_points"];
+            /*for (auto k = (*j)["balls"].begin(); k != (*j)["balls"].end(); ++k)
             {
                 Priorityes[num].second.push_back(*k);
+            }*/
+        }
+        if ((*i)["id"] == 4529) {
+            for (auto k = Priorityes.begin(); k != Priorityes.end(); ++k) {
+                cout << (*k).first << endl;
             }
         }
         Entrant e;
@@ -306,7 +428,7 @@ int main()
     int maxCountOfPriorityes;
     vector<int> full_outsiders;
     get_from_json(direction, entrants, maxCountOfPriorityes);
-
+    //TODO Here Error
     DistributionOfEntrantsByDirections(entrants, direction, maxCountOfPriorityes, full_outsiders);
 
     set_to_json(direction, entrants, full_outsiders);
