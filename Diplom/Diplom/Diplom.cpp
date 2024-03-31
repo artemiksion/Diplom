@@ -141,9 +141,6 @@ void ThrowEntrantIdFurther(vector<Entrant>& Entrants, const int& EntrantId, unor
 
 void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordered_map<int, vector<int>>& direction, const int& DirectionId, vector<int>& Outsiders, const int NumOfCurrPrior, vector<int>& full_outsiders)
 {
-    if (Entrants[EntrantId].getPersonNumber() == 4529) {
-        cout << "Entrant with id 4529 enter in function InsertInDirection with NumofCurrentPrior - " << NumOfCurrPrior << endl;
-    }
     if (direction[DirectionId].size() == 0 && direction[DirectionId].capacity() == 0)
     {
         ThrowEntrantIdFurther(Entrants, EntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
@@ -154,12 +151,7 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
         direction[DirectionId].push_back(EntrantId);
         return;
     }
-    //cout << "Trying get iterator. line 153" << endl;
     vector<int>::iterator itr = --direction[DirectionId].end();
-    //cout << "Have got iterator - " << *itr << "  line 153" << endl;
-    //cout << "Direction id: " << DirectionId << endl;
-    //cout << "DirectionId size " << direction[DirectionId].size() << endl;
-    //cout << "Direction --itr eq direction.begin " << (itr == direction[DirectionId].begin()) << endl;
     int NextEntrantId;
     while (itr != direction[DirectionId].begin())
     {
@@ -169,32 +161,16 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             {
                 if (itr == --direction[DirectionId].end())
                 {
-                    if (Entrants[EntrantId].getPersonNumber() == 4529) {
-                        cout << "Trying to throw further 4529 at line 179" << endl;
-                    }
                     ThrowEntrantIdFurther(Entrants, EntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
                     return;
                 }
                 NextEntrantId = *(--direction[DirectionId].end());
                 direction[DirectionId].pop_back();
-                //cout << "Trying to insert iterator. line 170" << endl;
-                if (Entrants[EntrantId].getPersonNumber() == 4529) {
-                    cout << "Inserting Entrant 4529 at line 184" << endl;
-                }
                 direction[DirectionId].insert(++itr, EntrantId);
-                //cout << "Has insert iterator. line 170" << endl;
-                if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
-                    cout << "Trying to throw further 4529 at line 190" << endl;
-                }
                 ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
                 return;
             }
-            //cout << "Trying to insert iterator. line 176" << endl;
-            if (Entrants[EntrantId].getPersonNumber() == 4529) {
-                cout << "Inserting Entrant 4529 at line 196" << endl;
-            }
             direction[DirectionId].insert(++itr, EntrantId);
-            //cout << "Trying to insert iterator. line 176" << endl;
             return;
         }
         else
@@ -202,67 +178,41 @@ void InsertInDirection(vector<Entrant>& Entrants, const int& EntrantId, unordere
             --itr;
         }
     }
+
+    //cout << "First Entrant " << Entrants[*itr].getPersonNumber() << endl;
+    //cout << "Second Entrant " << Entrants[EntrantId].getPersonNumber() << endl;
     //cout << "Comparing Entrants " << (Entrants[*itr] >= Entrants[EntrantId]) << endl;
-    //Try to check here, why itr not valid
-    if (Entrants[*itr] >= Entrants[EntrantId])
-    {
+    if (Entrants[*itr] >= Entrants[EntrantId]) {
         if (direction[DirectionId].size() == direction[DirectionId].capacity())
         {
             NextEntrantId = *(--direction[DirectionId].end());
-            direction[DirectionId].pop_back();
-            //cout << "Trying to insert iterator. line 193" << endl;
-            if (Entrants[EntrantId].getPersonNumber() == 4529) {
-                cout << "Inserting Entrant 4529 at line 217" << endl;
+            if (direction[DirectionId].size() == 1) {
+                ThrowEntrantIdFurther(Entrants, EntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             }
-            direction[DirectionId].insert(++itr, EntrantId);
-            //cout << "Has insert iterator. line 193" << endl;
-            if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
-                cout << "Trying to throw further 4529 at line 217" << endl;
+            else {
+
+                direction[DirectionId].pop_back();
+                direction[DirectionId].insert(++itr, EntrantId);
+                ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             }
-            ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
-        }
-        //cout << "Trying to insert iterator. line 199" << endl;
-        if (Entrants[EntrantId].getPersonNumber() == 4529) {
-            cout << "Inserting Entrant 4529 at line 229" << endl;
         }
         direction[DirectionId].insert(++itr, EntrantId);
-        //cout << "Trying to insert iterator. line 199" << endl;
-    }
-    else
-    {
+    } else {
         if (direction[DirectionId].size() == direction[DirectionId].capacity())
         {
             NextEntrantId = *(--direction[DirectionId].end());
             direction[DirectionId].pop_back();
-            //Error HERE
-            //cout << "Trying to insert iterator. line 208" << endl;
-            //Here we find not valid iterator
-            //cout << *itr << "Number in Iterator" << endl;
-            if (Entrants[EntrantId].getPersonNumber() == 4529) {
-                cout << "Inserting Entrant 4529 at line 247" << endl;
+            if (direction[DirectionId].size() == 0) {
+                direction[DirectionId].push_back(EntrantId);
             }
-            direction[DirectionId].insert(itr, EntrantId);
-            //cout << "Iterator has inserted. line 208" << endl;
-            if (Entrants[NextEntrantId].getPersonNumber() == 4529) {
-                cout << "Trying to throw further 4529 at line 239" << endl;
+            else {
+                direction[DirectionId].insert(itr, EntrantId);
             }
             ThrowEntrantIdFurther(Entrants, NextEntrantId, direction, Outsiders, NumOfCurrPrior, full_outsiders);
             return;
         }
-        //cout << "Trying to insert iterator. line 215" << endl;
-        if (Entrants[EntrantId].getPersonNumber() == 4529) {
-            cout << "Inserting Entrant 4529 at line 257" << endl;
-            cout << "His current prior - " << Entrants[EntrantId].getCurrPrior() << endl;
-            cout << "His current napravlenie - " << Entrants[EntrantId].getCurrPriorNapravlenie() << endl;
-        }
         direction[DirectionId].insert(itr, EntrantId);
-        if (Entrants[EntrantId].getPersonNumber() == 4529) {//I need to output persons in that direction
-            cout << "Inserting Entrant 4529 at line 257" << endl;
-            cout << "His current prior - " << Entrants[EntrantId].getCurrPrior() << endl;
-            cout << "His current napravlenie - " << Entrants[EntrantId].getCurrPriorNapravlenie() << endl;
-        }
-        //cout << "Trying to insert iterator. line 215" << endl;
     }
 
 }
